@@ -1,6 +1,6 @@
 PLUGIN_NAME = mg_ms_tflinter
 TFLINT_CONFIG = .tflint.hcl
-VERSION = 0.0.2
+VERSION = 0.0.3
 
 # Install dependencies
 install:
@@ -22,9 +22,9 @@ install-plugin: build
 # Run tests
 test: install-plugin
 	@echo "Testing valid configuration..."
-	@tflint --config=$(TFLINT_CONFIG) testdata/valid/main.tf || { echo "Valid config test failed"; exit 1; }
+	@TFLINT_CONFIG=$(PWD)/$(TFLINT_CONFIG) tflint --chdir=$(PWD)/testdata/valid --filter="*" || { echo "Valid config test failed"; exit 1; }
 	@echo "Testing invalid configuration..."
-	@tflint --config=$(TFLINT_CONFIG) testdata/invalid/main.tf | grep -q "terraform_workspace_warning" || { echo "Invalid config test failed"; exit 1; }
+	@TFLINT_CONFIG=$(PWD)/$(TFLINT_CONFIG) tflint --chdir=$(PWD)/testdata/invalid --filter="*" || { echo "Invalid config test failed"; exit 1; }
 	@echo "All tests passed!"
 
 # Clean up
@@ -37,8 +37,11 @@ clean:
 release: install build
 	git tag -a v$(VERSION) -m "Release v$(VERSION)"
 	git push origin v$(VERSION)
-	gh release create v$(VERSION) --title "Release v$(VERSION)" --notes "Release notes for v$(VERSION)" --draft
+	shasum -a 256 tflint-rules > checksums.txt
+	gh release create v$(VERSION) --title "Release v$(VERSION)" --notes "Release notes for v$(VERSION)" --draft \
+		tflint-rules checksums.txt
 	@echo "Release v$(VERSION) created!"
+
 
 # Delete all releases from GitHub
 delete-releases:
