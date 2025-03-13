@@ -2,7 +2,10 @@ module github.com/JMShadbury/mg_ms_tflinter
 
 go 1.24.1
 
-require github.com/terraform-linters/tflint-plugin-sdk v0.22.0
+require (
+	github.com/hashicorp/hcl/v2 v2.23.0
+	github.com/terraform-linters/tflint-plugin-sdk v0.22.0
+)
 
 require (
 	github.com/agext/levenshtein v1.2.1 // indirect
@@ -13,7 +16,6 @@ require (
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.6.2 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.23.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect

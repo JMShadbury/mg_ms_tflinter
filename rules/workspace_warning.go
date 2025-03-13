@@ -3,6 +3,7 @@ package rules
 import (
     "github.com/terraform-linters/tflint-plugin-sdk/hclext"
     "github.com/terraform-linters/tflint-plugin-sdk/tflint"
+    "github.com/hashicorp/hcl/v2"
 )
 
 // WorkspaceWarningRule checks for terraform.workspace usage
@@ -45,27 +46,24 @@ func (r *WorkspaceWarningRule) Check(runner tflint.Runner) error {
         return err
     }
 
-    // Walk through all expressions
+    // Check each attribute for terraform.workspace references
     for _, attr := range body.Attributes {
-        err := hclext.WalkExpressions(attr.Expr, func(expr hclext.Expression) (bool, error) {
-            // Check if the expression contains terraform.workspace
-            vars := expr.Variables()
-            for _, v := range vars {
-                if len(v) > 1 && v[0].String() == "terraform" && v[1].String() == "workspace" {
+        vars := attr.Expr.Variables()
+        for _, traversal := range vars {
+            if len(traversal) >= 2 {
+                root, ok1 := traversal[0].(hcl.TraverseRoot)
+                attrName, ok2 := traversal[1].(hcl.TraverseAttr)
+                if ok1 && ok2 && root.Name == "terraform" && attrName.Name == "workspace" {
                     err := runner.EmitIssue(
                         r,
                         "Warning: Avoid using terraform.workspace as it can lead to unexpected behavior",
-                        v.Range(),
+                        attr.Range, // Use attribute range instead of traversal range
                     )
                     if err != nil {
-                        return false, err
+                        return err
                     }
                 }
             }
-            return true, nil
-        })
-        if err != nil {
-            return err
         }
     }
 
