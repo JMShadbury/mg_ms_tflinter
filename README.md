@@ -17,3 +17,9 @@ go mod init github.com/JMShadbury/mg_ms_tflinter
 ```bash
 go get github.com/terraform-linters/tflint-plugin-sdk
 ```
+
+### Install tflint
+```bash
+brew install tflint
+```
+

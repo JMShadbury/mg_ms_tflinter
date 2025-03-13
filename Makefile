@@ -1,56 +1,35 @@
 PLUGIN_NAME = mg_ms_tflinter
 TFLINT_CONFIG = .tflint.hcl
-VERSION = 1.0.0  # Set the release version
+VERSION = 0.0.1
 
 # Install dependencies
 install:
-	@echo "Checking if Go module is initialized..."
-	if [ ! -f go.mod ]; then \
-		echo "Initializing Go module..."; \
-		go mod init github.com/JMShadbury/mg_ms_tflinter; \
-	fi
-	@echo "Installing dependencies..."
+	go mod init github.com/JMShadbury/mg_ms_tflinter
 	go get github.com/terraform-linters/tflint-plugin-sdk
 
-# Run go mod tidy before building
-tidy:
-	go mod tidy
-
 # Build the plugin
-build: tidy
+build:
 	go build -o tflint-rules ./cmd
 
-# Run TFLint tests on all Terraform files in testdata/valid and testdata/invalid
-test:
-	@echo "Running tests..."
-	@failed=0; \
-	# Test valid files
-	for file in testdata/valid/*.tf; do \
-		echo "Checking valid file: $$file"; \
-		if tflint --config=$(TFLINT_CONFIG) $$file 2>&1 | grep -q "Warning:"; then \
-			echo "❌ Test failed: $$file should not trigger warnings."; \
-			failed=1; \
-		fi; \
-	done; \
-	# Test invalid files
-	for file in testdata/invalid/*.tf; do \
-		echo "Checking invalid file: $$file"; \
-		if ! tflint --config=$(TFLINT_CONFIG) $$file 2>&1 | grep -q "Warning:"; then \
-			echo "❌ Test failed: $$file should have triggered a warning."; \
-			failed=1; \
-		fi; \
-	done; \
-	# Final result
-	@echo $$([ $$failed -eq 0 ] && echo "✅ All tests passed." || echo "❌ Some tests failed."); \
-	[ $$failed -eq 0 ] || exit 1;
+# Install plugin locally
+install-plugin: build
+	mkdir -p ~/.tflint.d/plugins
+	mv tflint-rules ~/.tflint.d/plugins/tflint-rules-${PLUGIN_NAME}
 
+# Run tests
+test: install-plugin
+	@echo "Testing valid configuration..."
+	@tflint --config=$(TFLINT_CONFIG) testdata/valid/main.tf || { echo "Valid config test failed"; exit 1; }
+	@echo "Testing invalid configuration..."
+	@tflint --config=$(TFLINT_CONFIG) testdata/invalid/main.tf | grep -q "terraform_workspace_warning" || { echo "Invalid config test failed"; exit 1; }
+	@echo "All tests passed!"
 
-# Clean build artifacts
+# Clean up
 clean:
 	rm -f tflint-rules
 
-# Create a release version and push to GitHub
-release:
-	@echo "Creating release..."
-	git tag -a v$(VERSION) -m "Release v$(VERSION)"
-	git push origin v$(VERSION)
+# Delete all releases from GitHub
+delete-releases:
+	@echo "Deleting all releases..."
+	@gh release list --limit 1000 | awk '{print $$3}' | xargs -n1 gh release delete -y || true
+	@echo "All releases deleted!"

@@ -1,3 +1,3 @@
-variable "env" {
-  default = terraform.workspace
+local {
+  workspace = terraform.workspace
 }

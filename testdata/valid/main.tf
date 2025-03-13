@@ -1,3 +1,3 @@
-variable "env" {
-  default = "production"
+local {
+    workspace = "Hello, World!"
 }
