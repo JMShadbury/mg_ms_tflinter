@@ -24,6 +24,7 @@ build: tidy
 test:
 	@echo "Running tests..."
 	@failed=0; \
+	# Test valid files
 	for file in testdata/valid/*.tf; do \
 		echo "Checking valid file: $$file"; \
 		if tflint --config=$(TFLINT_CONFIG) $$file 2>&1 | grep -q "Warning:"; then \
@@ -31,6 +32,7 @@ test:
 			failed=1; \
 		fi; \
 	done; \
+	# Test invalid files
 	for file in testdata/invalid/*.tf; do \
 		echo "Checking invalid file: $$file"; \
 		if ! tflint --config=$(TFLINT_CONFIG) $$file 2>&1 | grep -q "Warning:"; then \
@@ -38,12 +40,10 @@ test:
 			failed=1; \
 		fi; \
 	done; \
-	if [ $$failed -eq 0 ]; then \
-		echo "✅ All tests passed."; \
-	else \
-		echo "❌ Some tests failed."; \
-		exit 1; \
-	fi
+	# Final result
+	@echo $$([ $$failed -eq 0 ] && echo "✅ All tests passed." || echo "❌ Some tests failed."); \
+	[ $$failed -eq 0 ] || exit 1;
+
 
 # Clean build artifacts
 clean:
