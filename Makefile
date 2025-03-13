@@ -1,8 +1,15 @@
 PLUGIN_NAME = mg_ms_tflinter
 TFLINT_CONFIG = .tflint.hcl
+VERSION = 1.0.0  # Set the release version
 
 # Install dependencies
 install:
+	@echo "Checking if Go module is initialized..."
+	if [ ! -f go.mod ]; then \
+		echo "Initializing Go module..."; \
+		go mod init github.com/JMShadbury/mg_ms_tflinter; \
+	fi
+	@echo "Installing dependencies..."
 	go get github.com/terraform-linters/tflint-plugin-sdk
 
 # Run go mod tidy before building
@@ -41,3 +48,9 @@ test:
 # Clean build artifacts
 clean:
 	rm -f tflint-rules
+
+# Create a release version and push to GitHub
+release:
+	@echo "Creating release..."
+	git tag -a v$(VERSION) -m "Release v$(VERSION)"
+	git push origin v$(VERSION)
